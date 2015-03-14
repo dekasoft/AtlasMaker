@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: libs/miglayout-4.0.jar libs/slon.jar
+Main-Class: com.dekagames.atlasmaker.MainApplication
+
