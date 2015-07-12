@@ -579,8 +579,9 @@ public class MainWindow extends JFrame implements ActionListener {
                 GlyphNode glphNode = fntNode.getChildAt(j);
 
                 if (glphNode.pictureRect.isInAtlas) {
-                    nx = glphNode.pictureRect.x+fntNode.border;
-                    ny = glphNode.pictureRect.y+fntNode.border;
+                    // шрифты содержат картинку уже со всеми отступами и т.д.
+                    nx = glphNode.pictureRect.x;//+fntNode.border;
+                    ny = glphNode.pictureRect.y;//+fntNode.border;
                     atlasGraphics.drawImage(glphNode.image, nx, ny, null);
                 }
             }
@@ -750,8 +751,8 @@ public class MainWindow extends JFrame implements ActionListener {
                 glyphSlon.setKeyValue("glyph",glphNode.glyph);
                 glyphSlon.setKeyValue("x", (glphNode.pictureRect.x + fntNode.border));
                 glyphSlon.setKeyValue("y", (glphNode.pictureRect.y + fntNode.border));
-                glyphSlon.setKeyValue("w", (glphNode.pictureRect.w - 2 * fntNode.border));
-                glyphSlon.setKeyValue("h", (glphNode.pictureRect.h - 2 * fntNode.border));
+                glyphSlon.setKeyValue("w", (glphNode.pictureRect.w - fntNode.border));
+                glyphSlon.setKeyValue("h", (glphNode.pictureRect.h - fntNode.border));
 
                 // расстояние от origin до левой границы изображения буквы. Может быть отрицательным.
                 glyphSlon.setKeyValue("lsb", (glphNode.lsb + fntNode.border));

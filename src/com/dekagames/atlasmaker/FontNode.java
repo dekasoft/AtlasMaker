@@ -123,15 +123,17 @@ public class FontNode {
 
 
             // рисуем сам символ белым цветом
-            shapeFilled = glyphVector.getOutline();
+//            shapeFilled = glyphVector.getOutline();
             gr.translate(-glyphLSB + outline/OUTLINE_FACTOR+border, -glyphOriginY + outline/OUTLINE_FACTOR+border);
             gr.setPaint(Color.white);
-            gr.fill(shapeFilled);
-            gr.draw(shapeFilled);
+//            gr.fill(shapeFilled);
+//            gr.draw(shapeFilled);
 
+            gr.drawGlyphVector(glyphVector,0,0);    // так ГОРАЗДО лучшее качество прорисовки символов!!!!!
 
             // если есть обводка, то создаем ее и рисуем черным цветом
             if (outline > 0){
+                shapeFilled = glyphVector.getOutline();
                 stroke = new BasicStroke(outline/OUTLINE_FACTOR);
                 shapeOutline = stroke.createStrokedShape(shapeFilled);
                 gr.setPaint(Color.black);
