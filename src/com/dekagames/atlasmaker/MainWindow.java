@@ -5,6 +5,8 @@ import com.dekagames.slon.Slon;
 import com.dekagames.slon.SlonException;
 import com.dekagames.slon.SlonNode;
 import net.miginfocom.swing.MigLayout;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,8 +14,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -591,6 +592,7 @@ public class MainWindow extends JFrame implements ActionListener {
         try {
             ImageIO.write(atlasPanel.atlasImage, "png", new File(filename));
             export_atlas(filename+".atlas");
+            export_atlas_to_json(filename+".json");
         } catch (IOException ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -772,5 +774,88 @@ public class MainWindow extends JFrame implements ActionListener {
 //	    slon.load("C:\\test.slon");
         slon.save(path);
     }
+
+
+    // экспортитуем полученный атлас в файл JSON
+    private void export_atlas_to_json(String path){
+        JSONObject rootJSON = new JSONObject();
+
+        JSONObject fontsJSON = new JSONObject();
+        rootJSON.put("fonts", fontsJSON);
+
+        JSONObject spritesJSON = new JSONObject();
+        rootJSON.put("sprites", spritesJSON);
+
+        rootJSON.put("height", comboHeight.getSelectedItem());
+        rootJSON.put("width", comboWidth.getSelectedItem());
+
+        // экспорт спрайтов в секцию со спрайтами
+        for (int i=0; i< spriteTree.getCount(); i++){
+            JSONObject spriteJSON = new JSONObject();
+            SpriteNode sprNode = spriteTree.getNodeAt(i);
+            // если есть обводка - будем выгружать с ее учетом
+            int outlineBorder = 0;
+            if (sprNode.isOutlineWithBorder)
+                outlineBorder = 1;
+
+            JSONArray frames = new JSONArray();
+            for (int j=0; j<sprNode.getChildCount(); j++){
+                JSONObject frameJSON = new JSONObject();
+                FrameNode frmNode = sprNode.getChildAt(j);
+                // запишем характеристики отдельного кадра
+                frameJSON.put("pivotY", (frmNode.yPivot - frmNode.cropTop));
+                frameJSON.put("pivotX", (frmNode.xPivot - frmNode.cropLeft));
+                frameJSON.put("h", (frmNode.pictureRect.h - 2 * sprNode.transparentBorder-2*outlineBorder));
+                frameJSON.put("w", (frmNode.pictureRect.w - 2 * sprNode.transparentBorder-2*outlineBorder));
+                frameJSON.put("y", (frmNode.pictureRect.y + sprNode.transparentBorder+outlineBorder));
+                frameJSON.put("x", (frmNode.pictureRect.x + sprNode.transparentBorder+outlineBorder));
+
+                frames.put(frameJSON);
+            }
+            spriteJSON.put("frames", frames);
+
+            spritesJSON.put(sprNode.toString(), spriteJSON);
+        }
+
+
+        // экспорт шрифтов в секцию со шрифтами
+        for (int i=0; i< fontTree.getCount(); i++){
+            JSONObject fontJSON = new JSONObject();
+            FontNode fntNode = fontTree.getNodeAt(i);
+
+            // выгрузим каждую буковку
+            for (int j=0; j<fntNode.getChildCount(); j++){
+                JSONObject glyph = new JSONObject();
+                GlyphNode glphNode = fntNode.getChildAt(j);
+                glyph.put("x", (glphNode.pictureRect.x + fntNode.border));
+                glyph.put("y", (glphNode.pictureRect.y + fntNode.border));
+                glyph.put("w", (glphNode.pictureRect.w - fntNode.border));
+                glyph.put("h", (glphNode.pictureRect.h - fntNode.border));
+
+                // расстояние от origin до левой границы изображения буквы. Может быть отрицательным.
+                glyph.put("lsb", (glphNode.lsb + fntNode.border));
+                // расстояние от верха строки до origin символа
+                glyph.put("originY", (glphNode.originY + fntNode.border));
+                // расстояние от origin до origin следующего символа
+                glyph.put("advance", glphNode.advance);
+
+                fontJSON.put(glphNode.glyph, glyph);
+            }
+            fontsJSON.put(fntNode.toString(), fontJSON);
+        }
+
+
+        // сохраним в файл
+        try {
+            FileWriter writer = new FileWriter(path);
+            writer.write(rootJSON.toString(2));
+            writer.close();
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Could not save to "+path, "Atlas Maker", JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
 }
 
